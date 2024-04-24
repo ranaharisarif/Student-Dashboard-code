@@ -20,7 +20,7 @@ const UploadCSVToDatabase = ({ refreshTable, setData }) => {
           const text = e.target.result;
           const parsedData = parseCSV(text);
           await uploadToDatabase(parsedData);
-          setData(parsedData);
+          setData(parsedData.map((a,i)=>({...a,id:i})));
           console.log(parsedData.map((a,i)=>({...a,id:i})));
           console.log("Data uploaded successfully");
           message.success("Data uploaded successfully");
