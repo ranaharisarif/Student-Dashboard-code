@@ -1,41 +1,43 @@
+
 import React, { useState } from "react";
 import { ref, set } from "firebase/database";
 import database from "./firebase";
-import { Button, message } from "antd";
+import { Button, message, Upload } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+
 const UploadCSVToDatabase = ({ refreshTable, setData }) => {
-  const [file, setFile] = useState(null);
+  const [fileList, setFileList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
-  const handleChange = (e) => {
-    if (e.target.files[0]) {
-      setFile(e.target.files[0]);
+  const handleUpload = async ({ file }) => {
+    try {
+      setUploading(true);
+
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const text = e.target.result;
+        const parsedData = parseCSV(text);
+        const response = await uploadToDatabase(parsedData);
+        setData(parsedData.map((a, i) => ({ ...a, id: i })));
+        console.log(
+          parsedData.map((a, i) => ({ ...a, id: i })),
+          response
+        );
+        console.log("Data uploaded successfully");
+        message.success("Data uploaded successfully");
+        refreshTable();
+        setUploading(false);
+        return response; 
+      };
+
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error reading file:", error);
+      setUploading(false);
+      throw error;
     }
   };
-
-  const handleUpload = async () => {
-    if (file) {
-      try {
-        const reader = new FileReader();
-
-        reader.onload = async (e) => {
-          const text = e.target.result;
-          const parsedData = parseCSV(text);
-          await uploadToDatabase(parsedData);
-          setData(parsedData.map((a,i)=>({...a,id:i})));
-          console.log(parsedData.map((a,i)=>({...a,id:i})));
-          console.log("Data uploaded successfully");
-          message.success("Data uploaded successfully");
-          refreshTable();
-        };
-
-        reader.readAsText(file);
-      } catch (error) {
-        console.error("Error reading file:", error);
-      }
-    } else {
-      console.error("No file selected");
-    }
-  };
-
 
   const parseCSV = (csvData) => {
     const lines = csvData.split("\n");
@@ -55,23 +57,31 @@ const UploadCSVToDatabase = ({ refreshTable, setData }) => {
   };
 
   const uploadToDatabase = async (data) => {
-    const databaseRef = ref(database, "students"); 
+    const databaseRef = ref(database, "students");
 
     try {
       let response = await set(databaseRef, data);
       return response;
     } catch (error) {
       console.error("Error uploading data to database:", error);
+      throw error;
     }
   };
 
   return (
-    <div>
-      <input type="file" onChange={handleChange} />
-      <Button onClick={handleUpload} type="primary">
-        Upload
+    <Upload
+      fileList={fileList}
+      beforeUpload={(file) => {
+        setFileList([file]);
+        return false; 
+      }}
+      onChange={handleUpload}
+      showUploadList={false}
+    >
+      <Button icon={<UploadOutlined />} type="primary" loading={uploading}>
+        {uploading ? "Uploading..." : "Select CSV File"}
       </Button>
-    </div>
+    </Upload>
   );
 };
 
