@@ -5,6 +5,7 @@ import database from "./firebase";
 import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { ref, get, remove, update } from "firebase/database";
 import Upload from "./Upload";
+import PDFDownloader from "./PDFDownlaoder";
 
 const StudentListing = () => {
   const [data, setData] = useState([]);
@@ -104,7 +105,6 @@ const StudentListing = () => {
             >
               <Input />
             </Form.Item>
-            
           </ModalForm>
         </Space>
       ),
@@ -112,7 +112,7 @@ const StudentListing = () => {
   ];
   const actionRef = useRef();
   const refreshTable = () => actionRef?.current?.reload();
-  console.log(actionRef)
+  console.log(actionRef);
   return (
     <ProTable
       actionRef={actionRef}
@@ -125,7 +125,10 @@ const StudentListing = () => {
       search={false}
       options={false}
       setting={false}
-      toolBarRender={() => [<Upload refreshTable={refreshTable} setData={setData}/>]}
+      toolBarRender={() => [
+        <Upload refreshTable={refreshTable} setData={setData} />,
+        <PDFDownloader data={data} />,
+      ]}
     />
   );
 };
